@@ -1,12 +1,6 @@
 <?php
 include_once(__DIR__ . "/connect.php");
 
-/*
-  Bảng accounts hiện có:
-  id, fullname, phone, password, address, email, status, userType
-  -> Front-end cần thêm key 'join' (để parse ngày) và 'cart' (mảng rỗng).
-*/
-
 $sql = "SELECT 
           id,
           fullname,
@@ -29,7 +23,7 @@ while ($row = $res->fetch_assoc()) {
     "id"       => (int)$row["id"],
     "fullname" => $row["fullname"],
     "phone"    => $row["phone"],
-    "password" => $row["password"],   // theo yêu cầu bài học: plain text
+    "password" => $row["password"],   
     "address"  => $row["address"],
     "email"    => $row["email"],
     "status"   => (int)$row["status"],   // FE so sánh 0/1

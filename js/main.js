@@ -1,15 +1,15 @@
-﻿// Äá»•i sang Ä‘á»‹nh dáº¡ng tiá»n VND
+﻿// Đổi sang định dạng tiền VND
 function vnd(price) {
   return price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
 }
 
-// ÄÃ³ng cá»­a sá»• popup 
+// Đóng cửa sổ popup 
 const body = document.querySelector("body");
 let modalContainer = document.querySelectorAll('.modal');
 let modalBox = document.querySelectorAll('.mdl-cnt');
 let formLogSign = document.querySelector('.forms');
 
-// Click vÃ¹ng ngoÃ i sáº½ táº¯t Popup
+// Click vùng ngoài sẽ tắt Popup
 modalContainer.forEach(item => {
   item.addEventListener('click', closeModal);
 });
@@ -45,7 +45,7 @@ function decreasingNumber(e) {
   }
 }
 
-// Xem chi tiáº¿t sáº£n pháº©m
+// Xem chi tiết sản phẩm
 async function detailProduct(index) {
   let modal = document.querySelector('.modal.product-detail');
   if (typeof event !== 'undefined' && event && typeof event.preventDefault === 'function') {
@@ -78,8 +78,8 @@ async function detailProduct(index) {
   }
 
   if (!infoProduct) {
-    console.warn('[Lesac] Khong tim thay san pham voi id', index);
-    toast({ title: 'Warning', message: 'San pham khong ton tai hoac da bi an.', type: 'warning', duration: 3000 });
+    console.warn('[Lesac] Không tìm thấy sản phẩm với id', index);
+    toast({ title: 'Cảnh báo', message: 'Sản phẩm không tồn tại hoặc đã bị ẩn.', type: 'warning', duration: 3000 });
     return;
   }
 
@@ -102,15 +102,15 @@ async function detailProduct(index) {
     </div>
     <div class="notebox">
             <p class="notebox-title">Ghi chú</p>
-            <textarea class="text-note" id="popup-detail-note" placeholder="Nháº­p thÃ´ng tin cáº§n lÆ°u Ã½..."></textarea>
+            <textarea class="text-note" id="popup-detail-note" placeholder="Nhập thông tin cần lưu ý..."></textarea>
     </div>
     <div class="modal-footer">
         <div class="price-total">
-            <span class="thanhtien">ThÃ nh tiá»n</span>
+            <span class="thanhtien">Thành tiền</span>
             <span class="price">${vnd(infoProduct.price)}</span>
         </div>
         <div class="modal-footer-control">
-            <button class="button-dathangngay" data-product="${infoProduct.id}">Äáº·t hÃ ng ngay</button>
+            <button class="button-dathangngay" data-product="${infoProduct.id}">Đặt hàng ngay</button>
             <button class="button-dat" id="add-cart" onclick="animationCart()"><i class="fa-light fa-basket-shopping"></i></button>
         </div>
     </div>`;
@@ -118,7 +118,7 @@ async function detailProduct(index) {
   modal.classList.add('open');
   body.style.overflow = "hidden";
 
-  // Cáº­p nháº­t giÃ¡ tiá»n khi tÄƒng sá»‘ lÆ°á»£ng sáº£n pháº©m
+  // Cập nhật giá tiền khi tăng số lượng sản phẩm
   let tgbtn = document.querySelectorAll('.is-form');
   let qty = document.querySelector('.product-control .input-qty');
   let priceText = document.querySelector('.price');
@@ -129,17 +129,17 @@ async function detailProduct(index) {
     });
   });
 
-  // ThÃªm sáº£n pháº©m vÃ o giá» hÃ ng
+  // Thêm sản phẩm vào giỏ hàng
   let productbtn = document.querySelector('.button-dat');
   productbtn.addEventListener('click', (e) => {
     if (localStorage.getItem('currentuser')) {
       addCart(infoProduct.id);
     } else {
-      toast({ title: 'Warning', message: 'ChÆ°a Ä‘Äƒng nháº­p tÃ i khoáº£n !', type: 'warning', duration: 3000 });
+      toast({ title: 'Cảnh báo', message: 'Chưa đăng nhập tài khoản!', type: 'warning', duration: 3000 });
     }
   })
 
-  // Mua ngay sáº£n pháº©m
+  // Mua ngay sản phẩm
   dathangngay();
 }
 
@@ -151,12 +151,12 @@ function animationCart() {
   }, 1000)
 }
 
-// ThÃªm SP vÃ o giá» hÃ ng (giá»¯ localStorage Ä‘á»ƒ khÃ´ng vá»¡ UI)
+// Thêm SP vào giỏ hàng (giữ localStorage để không vỡ UI)
 function addCart(index) {
   let currentuser = localStorage.getItem('currentuser') ? JSON.parse(localStorage.getItem('currentuser')) : [];
   let soluong = document.querySelector('.input-qty').value;
   let popupDetailNote = document.querySelector('#popup-detail-note').value;
-  let note = popupDetailNote == "" ? "KhÃ´ng cÃ³ ghi chÃº" : popupDetailNote;
+  let note = popupDetailNote == "" ? "Không có ghi chú" : popupDetailNote;
   let productcart = {
     id: index,
     soluong: parseInt(soluong),
@@ -174,7 +174,7 @@ function addCart(index) {
   closeModal();
 }
 
-// Show giá» hÃ ng
+// Show giỏ hàng
 function showCart() {
   if (localStorage.getItem('currentuser') != null) {
     let currentuser = JSON.parse(localStorage.getItem('currentuser'));
@@ -195,7 +195,7 @@ function showCart() {
                 </div>
                 <p class="product-note"><i class="fa-light fa-pencil"></i><span>${product.note}</span></p>
                 <div class="cart-item-control">
-                    <button class="cart-item-delete" onclick="deleteCartItem(${product.id},this)">XÃ³a</button>
+                    <button class="cart-item-delete" onclick="deleteCartItem(${product.id},this)">Xóa</button>
                     <div class="buttons_added">
                         <input class="minus is-form" type="button" value="-" onclick="decreasingNumber(this)">
                         <input class="input-qty" max="100" min="1" name="" type="number" value="${product.soluong}">
@@ -225,15 +225,15 @@ function showCart() {
   })
 }
 
-// Delete cart item (fix bug so sÃ¡nh)
+// Delete cart item (fix bug so sánh)
 function deleteCartItem(id, el) {
   let cartParent = el.parentNode.parentNode;
   cartParent.remove();
   let currentUser = JSON.parse(localStorage.getItem('currentuser'));
-  let vitri = currentUser.cart.findIndex(item => item.id == id); // FIX: dÃ¹ng == thay vÃ¬ =
+  let vitri = currentUser.cart.findIndex(item => item.id == id); // FIX: dùng == thay vì =
   if (vitri > -1) currentUser.cart.splice(vitri, 1);
 
-  // Náº¿u trá»‘ng thÃ¬ hiá»ƒn thá»‹ giá» hÃ ng trá»‘ng
+  // Nếu trống thì hiển thị giỏ hàng trống
   if (!currentUser.cart || currentUser.cart.length == 0) {
     document.querySelector('.gio-hang-trong').style.display = 'flex';
     document.querySelector('button.thanh-toan').classList.add('disabled');
@@ -247,7 +247,7 @@ function updateCartTotal() {
   document.querySelector('.text-price').innerText = vnd(getCartTotal());
 }
 
-// Láº¥y tá»•ng tiá»n Ä‘Æ¡n hÃ ng
+// Lấy tổng tiền đơn hàng
 function getCartTotal() {
   let currentUser = JSON.parse(localStorage.getItem('currentuser'));
   let tongtien = 0;
@@ -271,11 +271,11 @@ function getProduct(item) {
   return product;
 }
 
-// onload: dÃ¹ng event listener Ä‘á»ƒ khÃ´ng bá»‹ Ä‘Ã¨
+// onload: dùng event listener để không bị đè
 window.addEventListener('load', updateAmount);
 window.addEventListener('load', updateCartTotal);
 
-// Láº¥y sá»‘ lÆ°á»£ng hÃ ng
+// Lấy số lượng hàng
 function getAmountCart() {
   let currentuser = JSON.parse(localStorage.getItem('currentuser'))
   let amount = 0;
@@ -296,7 +296,7 @@ function updateAmount() {
   }
 }
 
-// Save Cart Info (cáº­p nháº­t sá»‘ lÆ°á»£ng trong localStorage)
+// Save Cart Info (cập nhật số lượng trong localStorage)
 function saveAmountCart() {
   let cartAmountbtn = document.querySelectorAll(".cart-item-control .is-form");
   let listProduct = document.querySelectorAll('.cart-item');
@@ -367,7 +367,7 @@ function closeSearchMb() {
 
 // Signup && Login Form
 
-// Chuyá»ƒn Ä‘á»•i qua láº¡i SignUp & Login 
+// Chuyển đổi qua lại SignUp & Login 
 let signup = document.querySelector('.signup-link');
 let login = document.querySelector('.login-link');
 let container = document.querySelector('.signup-login .modal-container');
@@ -395,9 +395,9 @@ loginbtn.addEventListener('click', () => {
   body.style.overflow = "hidden";
 })
 
-// ÄÄƒng kÃ½ & ÄÄƒng nháº­p
+// Đăng ký & Đăng nhập
 
-// Chá»©c nÄƒng Ä‘Äƒng kÃ½
+// Chức năng đăng ký
 let signupButton = document.getElementById('signup-button');
 let loginButton = document.getElementById('login-button');
 
@@ -410,59 +410,59 @@ signupButton.addEventListener('click', (event) => {
   let passwordConfirmation = document.getElementById('password_confirmation').value.trim();
   let checkSignup = document.getElementById('checkbox-signup').checked;
 
-  // ====== KIá»‚M TRA Há»Œ TÃŠN ======
+  // ====== KIỂM TRA HỌ TÊN ======
   if (fullNameUser.length == 0) {
-    document.querySelector('.form-message-name').innerHTML = 'Vui lÃ²ng nháº­p há» vÃ  tÃªn';
+    document.querySelector('.form-message-name').innerHTML = 'Vui lòng nhập họ và tên';
     document.getElementById('fullname').focus();
   } else if (fullNameUser.length < 3) {
-    document.querySelector('.form-message-name').innerHTML = 'Há» vÃ  tÃªn pháº£i cÃ³ Ã­t nháº¥t 3 kÃ½ tá»±';
+    document.querySelector('.form-message-name').innerHTML = 'Họ và tên phải có ít nhất 3 ký tự';
     document.getElementById('fullname').value = '';
   } else {
     document.querySelector('.form-message-name').innerHTML = '';
   }
 
-  // ====== KIá»‚M TRA Sá» ÄIá»†N THOáº I ======
+  // ====== KIỂM TRA SỐ ĐIỆN THOẠI ======
   const phoneRegex = /^[0-9]{10}$/;
 
   if (phoneUser.length == 0) {
-    document.querySelector('.form-message-phone').innerHTML = 'Vui lÃ²ng nháº­p vÃ o sá»‘ Ä‘iá»‡n thoáº¡i';
+    document.querySelector('.form-message-phone').innerHTML = 'Vui lòng nhập vào số điện thoại';
   } else if (!phoneRegex.test(phoneUser)) {
-    document.querySelector('.form-message-phone').innerHTML = 'Sá»‘ Ä‘iá»‡n thoáº¡i pháº£i cÃ³ Ä‘Ãºng 10 chá»¯ sá»‘ vÃ  khÃ´ng chá»©a kÃ½ tá»± khÃ¡c';
+    document.querySelector('.form-message-phone').innerHTML = 'Số điện thoại phải có đúng 10 chữ số và không chứa ký tự khác';
     document.getElementById('phone').value = '';
   } else {
     document.querySelector('.form-message-phone').innerHTML = '';
   }
 
-  // ====== KIá»‚M TRA Máº¬T KHáº¨U ======
+  // ====== KIỂM TRA MẬT KHẨU ======
   const passwordRegex = /^(?=.*[A-Z]).{6,}$/;
 
   if (passwordUser.length == 0) {
-    document.querySelector('.form-message-password').innerHTML = 'Vui lÃ²ng nháº­p máº­t kháº©u';
+    document.querySelector('.form-message-password').innerHTML = 'Vui lòng nhập mật khẩu';
   } else if (!passwordRegex.test(passwordUser)) {
-    document.querySelector('.form-message-password').innerHTML = 'Máº­t kháº©u pháº£i cÃ³ Ã­t nháº¥t 6 kÃ½ tá»± vÃ  chá»©a Ã­t nháº¥t 1 chá»¯ cÃ¡i viáº¿t hoa';
+    document.querySelector('.form-message-password').innerHTML = 'Mật khẩu phải có ít nhất 6 ký tự và chứa ít nhất 1 chữ cái viết hoa';
     document.getElementById('password').value = '';
   } else {
     document.querySelector('.form-message-password').innerHTML = '';
   }
 
-  // ====== KIá»‚M TRA NHáº¬P Láº I Máº¬T KHáº¨U ======
+  // ====== KIỂM TRA NHẬP LẠI MẬT KHẨU ======
   if (passwordConfirmation.length == 0) {
-    document.querySelector('.form-message-password-confi').innerHTML = 'Vui lÃ²ng nháº­p láº¡i máº­t kháº©u';
+    document.querySelector('.form-message-password-confi').innerHTML = 'Vui lòng nhập lại mật khẩu';
   } else if (passwordConfirmation !== passwordUser) {
-    document.querySelector('.form-message-password-confi').innerHTML = 'Máº­t kháº©u khÃ´ng khá»›p';
+    document.querySelector('.form-message-password-confi').innerHTML = 'Mật khẩu không khớp';
     document.getElementById('password_confirmation').value = '';
   } else {
     document.querySelector('.form-message-password-confi').innerHTML = '';
   }
 
-  // ====== KIá»‚M TRA CHECKBOX ======
+  // ====== KIỂM TRA CHECKBOX ======
   if (!checkSignup) {
-    document.querySelector('.form-message-checkbox').innerHTML = 'Vui lÃ²ng check Ä‘Äƒng kÃ½';
+    document.querySelector('.form-message-checkbox').innerHTML = 'Vui lòng check đồng ý đăng ký';
   } else {
     document.querySelector('.form-message-checkbox').innerHTML = '';
   }
 
-  // ====== Náº¾U Táº¤T Cáº¢ Há»¢P Lá»† â†’ Gá»ŒI API ÄÄ‚NG KÃ + ÄÄ‚NG NHáº¬P NGAY ======
+  // ====== NẾU TẤT CẢ HỢP LỆ → GỌI API ĐĂNG KÝ + ĐĂNG NHẬP NGAY ======
   if (
     fullNameUser &&
     phoneRegex.test(phoneUser) &&
@@ -485,7 +485,7 @@ signupButton.addEventListener('click', (event) => {
     })
       .then(r => r.json())
       .then(res => {
-        if (!res.success) throw new Error(res.message || 'ÄÄƒng kÃ½ tháº¥t báº¡i');
+        if (!res.success) throw new Error(res.message || 'Đăng ký thất bại');
         return fetch('./api/login.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -493,7 +493,7 @@ signupButton.addEventListener('click', (event) => {
         }).then(r => r.json());
       })
       .then(loginRes => {
-        if (!loginRes.success) throw new Error(loginRes.message || 'ÄÄƒng nháº­p sau Ä‘Äƒng kÃ½ tháº¥t báº¡i');
+        if (!loginRes.success) throw new Error(loginRes.message || 'Đăng nhập sau đăng ký thất bại');
         localStorage.setItem('currentuser', JSON.stringify(loginRes.user));
         toast({ title: 'Thành công', message: 'Tạo tài khoản thành công!', type: 'success', duration: 3000 });
         closeModal();
@@ -501,26 +501,26 @@ signupButton.addEventListener('click', (event) => {
         updateAmount();
       })
       .catch(err => {
-        toast({ title: 'Tháº¥t báº¡i', message: err.message, type: 'error', duration: 3000 });
+        toast({ title: 'Thất bại', message: err.message, type: 'error', duration: 3000 });
       });
   } else {
-    console.warn("ThÃ´ng tin Ä‘Äƒng kÃ½ chÆ°a há»£p lá»‡!");
+    console.warn("Thông tin đăng ký chưa hợp lệ!");
   }
 });
 
-// Dang nhap (gá»i API, khÃ´ng phá»¥ thuá»™c localStorage.accounts)
+// Đăng nhập (gọi API, không phụ thuộc localStorage.accounts)
 loginButton.addEventListener('click', (ev) => {
   ev.preventDefault();
 
   const phonelog = document.getElementById('phone-login').value.trim();
   const passlog  = document.getElementById('password-login').value.trim();
 
-  // validate Ä‘Æ¡n giáº£n
+  // validate đơn giản
   if (!phonelog) {
-    document.querySelector('.form-message.phonelog').innerHTML = 'Vui lÃ²ng nháº­p vÃ o sá»‘ Ä‘iá»‡n thoáº¡i';
+    document.querySelector('.form-message.phonelog').innerHTML = 'Vui lòng nhập vào số điện thoại';
     return;
   } else if (phonelog.length !== 10) {
-    document.querySelector('.form-message.phonelog').innerHTML = 'Vui lÃ²ng nháº­p vÃ o sá»‘ Ä‘iá»‡n thoáº¡i 10 sá»‘';
+    document.querySelector('.form-message.phonelog').innerHTML = 'Vui lòng nhập vào số điện thoại 10 số';
     document.getElementById('phone-login').value = '';
     return;
   } else {
@@ -528,36 +528,36 @@ loginButton.addEventListener('click', (ev) => {
   }
 
   if (!passlog) {
-    document.querySelector('.form-message-check-login').innerHTML = 'Vui lÃ²ng nháº­p máº­t kháº©u';
+    document.querySelector('.form-message-check-login').innerHTML = 'Vui lòng nhập mật khẩu';
     return;
   } else if (passlog.length < 6) {
-    document.querySelector('.form-message-check-login').innerHTML = 'Vui lÃ²ng nháº­p máº­t kháº©u lá»›n hÆ¡n 6 kÃ­ tá»±';
-    // LÆ¯U Ã: Ä‘Ãºng id lÃ  'password-login' (trÆ°á»›c Ä‘Ã¢y báº¡n ghi nháº§m 'passwordlogin')
+    document.querySelector('.form-message-check-login').innerHTML = 'Vui lòng nhập mật khẩu lớn hơn 6 kí tự';
+    // LƯU Ý: đúng id là 'password-login' (trước đây bạn ghi nhầm 'passwordlogin')
     document.getElementById('password-login').value = '';
     return;
   } else {
     document.querySelector('.form-message-check-login').innerHTML = '';
   }
 
-  // gá»i API
+  // gọi API
   fetch(`./api/check_login.php?phone=${encodeURIComponent(phonelog)}&password=${encodeURIComponent(passlog)}`)
     .then(r => r.json())
     .then(data => {
       if (data.ok) {
-        // LÆ°u currentuser theo Ä‘Ãºng schema cÅ© Ä‘á»ƒ cÃ¡c chá»— khÃ¡c cháº¡y y nhÆ° cÅ©
+        // Lưu currentuser theo đúng schema cũ để các chỗ khác chạy y như cũ
         const user = {
           fullname: data.user.fullname,
           phone:    data.user.phone,
-          password: passlog,       // Ä‘ang dÃ¹ng plain trong DB máº«u
+          password: passlog,       // đang dùng plain trong DB mẫu
           address:  data.user.address || '',
           email:    data.user.email || '',
           status:   Number(data.user.status) === 1 ? 1 : 0,
-          join:     new Date(),    // khÃ´ng cÃ³ trong DB => giáº£ láº­p Ä‘á»ƒ UI cÅ© dÃ¹ng
-          cart:     [],            // giá» hiá»‡n táº¡i váº«n lÆ°u phÃ­a client theo thiáº¿t káº¿ cÅ©
+          join:     new Date(),    // không có trong DB => giả lập để UI cũ dùng
+          cart:     [],            // giỏ hiện tại vẫn lưu phía client theo thiết kế cũ
           userType: Number(data.user.userType) || 0
         };
 
-        // cáº­p nháº­t cache 'accounts' cho cÃ¡c mÃ n khÃ¡c (admin/user list)
+        // cập nhật cache 'accounts' cho các màn khác (admin/user list)
         let accounts = localStorage.getItem('accounts') ? JSON.parse(localStorage.getItem('accounts')) : [];
         const i = accounts.findIndex(a => a.phone === user.phone);
         if (i === -1) accounts.push(user); else accounts[i] = {...accounts[i], ...user};
@@ -566,30 +566,30 @@ loginButton.addEventListener('click', (ev) => {
         // set currentuser
         localStorage.setItem('currentuser', JSON.stringify(user));
 
-        toast({ title: 'Success', message: 'Đăng nhập thành công', type: 'success', duration: 3000 });
+        toast({ title: 'Thành công', message: 'Đăng nhập thành công', type: 'success', duration: 3000 });
         closeModal();
         kiemtradangnhap();
         checkAdmin();
         updateAmount();
       } else {
-        const msg = data.msg || 'ÄÄƒng nháº­p tháº¥t báº¡i';
-        toast({ title: 'Warning', message: msg, type: 'warning', duration: 3000 });
+        const msg = data.msg || 'Đăng nhập thất bại';
+        toast({ title: 'Cảnh báo', message: msg, type: 'warning', duration: 3000 });
       }
     })
     .catch(err => {
       console.error(err);
-      toast({ title: 'Error', message: 'Lá»—i káº¿t ná»‘i mÃ¡y chá»§', type: 'error', duration: 3000 });
+      toast({ title: 'Lỗi', message: 'Lỗi kết nối máy chủ', type: 'error', duration: 3000 });
     });
 });
 
 
-// Kiá»ƒm tra xem cÃ³ tÃ i khoáº£n Ä‘Äƒng nháº­p khÃ´ng ?
+// Kiểm tra xem có tài khoản đăng nhập không?
 function kiemtradangnhap() {
   let currentUser = localStorage.getItem('currentuser');
   if (currentUser != null) {
     let user = JSON.parse(currentUser);
     document.querySelector('.auth-container').innerHTML = `<span class="text-dndk">Tài khoản</span>
-            <span class="text-tk">${user.fullname} <i class="fa-sharp fa-solid fa-caret-down"></span>`
+            <span class="text-tk">${user.fullname} <i class="fa-sharp fa-solid fa-caret-down"></i></span>`
     document.querySelector('.header-middle-right-menu').innerHTML = `<li><a href="javascript:;" onclick="myAccount()"><i class="fa-light fa-circle-user"></i>Thông tin tài khoản</a></li>
             <li><a href="javascript:;" onclick="orderHistory()"><i class="fa-regular fa-bags-shopping"></i>Đơn hàng đã mua</a></li>
             <li class="border"><a id="logout" href="javascript:;"><i class="fa-light fa-right-from-bracket"></i>Thoát tài khoản</a></li>`
@@ -614,7 +614,7 @@ function checkAdmin() {
 window.addEventListener('load', kiemtradangnhap);
 window.addEventListener('load', checkAdmin);
 
-// Chuyá»ƒn Ä‘á»•i trang chá»§ vÃ  trang thÃ´ng tin tÃ i khoáº£n
+// Chuyển đổi trang chủ và trang thông tin tài khoản
 function myAccount() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
   document.getElementById('trangchu').classList.add('hide');
@@ -623,7 +623,7 @@ function myAccount() {
   userInfo();
 }
 
-// Chuyá»ƒn Ä‘á»•i trang chá»§ vÃ  trang xem lá»‹ch sá»­ Ä‘áº·t hÃ ng 
+// Chuyển đổi trang chủ và trang xem lịch sử đặt hàng 
 function orderHistory() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
   document.getElementById('account-user').classList.remove('open');
@@ -650,9 +650,9 @@ function userInfo() {
   }
 }
 
-// Thay Ä‘á»•i thÃ´ng tin (GIá»® NGUYÃŠN localStorage Ä‘á»ƒ khÃ´ng vá»¡ UI; náº¿u muá»‘n sync DB, táº¡o API cáº­p nháº­t)
+// Thay đổi thông tin (GIỮ NGUYÊN localStorage để không vỡ UI; nếu muốn sync DB, tạo API cập nhật)
 function changeInformation() {
-  let accounts = JSON.parse(localStorage.getItem('accounts') || '[]'); // váº«n giá»¯ cho tÆ°Æ¡ng thÃ­ch cÅ© náº¿u cÃ³
+  let accounts = JSON.parse(localStorage.getItem('accounts') || '[]'); // vẫn giữ cho tương thích cũ nếu có
   let user = JSON.parse(localStorage.getItem('currentuser'));
   let infoname = document.getElementById('infoname');
   let infoemail = document.getElementById('infoemail');
@@ -661,7 +661,7 @@ function changeInformation() {
   user.fullname = infoname.value;
   if (infoemail.value.length > 0) {
     if (!emailIsValid(infoemail.value)) {
-      document.querySelector('.inforemail-error').innerHTML = 'Vui lòng nhập email !';
+      document.querySelector('.inforemail-error').innerHTML = 'Vui lòng nhập email hợp lệ!';
       infoemail.value = '';
     } else {
       user.email = infoemail.value;
@@ -672,10 +672,10 @@ function changeInformation() {
     user.address = infoaddress.value;
   }
 
-  // cáº­p nháº­t láº¡i currentuser
+  // cập nhật lại currentuser
   localStorage.setItem('currentuser', JSON.stringify(user));
 
-  // náº¿u trÆ°á»›c Ä‘Ã¢y cÃ²n dÃ¹ng localStorage.accounts thÃ¬ sync táº¡m cho Ä‘á»¡ lá»—i
+  // nếu trước đây còn dùng localStorage.accounts thì sync tạm cho đỡ lỗi
   if (accounts && accounts.length) {
     let vitri = accounts.findIndex(item => item.phone == user.phone)
     if (vitri > -1) {
@@ -687,10 +687,10 @@ function changeInformation() {
   }
 
   kiemtradangnhap();
-  toast({ title: 'Success', message: 'Cập nhật thông tin thành công !', type: 'success', duration: 3000 });
+  toast({ title: 'Thành công', message: 'Cập nhật thông tin thành công!', type: 'success', duration: 3000 });
 }
 
-// Äá»•i máº­t kháº©u (giá»¯ localStorage Ä‘á»ƒ khÃ´ng vá»¡ UI; náº¿u muá»‘n sync DB, táº¡o API update password)
+// Đổi mật khẩu (giữ localStorage để không vỡ UI; nếu muốn sync DB, tạo API update password)
 function changePassword() {
   let currentUser = JSON.parse(localStorage.getItem("currentuser"));
   let passwordCur = document.getElementById('password-cur-info');
@@ -698,21 +698,21 @@ function changePassword() {
   let passwordConfirm = document.getElementById('password-comfirm-info');
   let check = true;
   if (passwordCur.value.length == 0) {
-    document.querySelector('.password-cur-info-error').innerHTML = 'Vui lÃ²ng nháº­p máº­t kháº©u hiá»‡n táº¡i';
+    document.querySelector('.password-cur-info-error').innerHTML = 'Vui lòng nhập mật khẩu hiện tại';
     check = false;
   } else {
     document.querySelector('.password-cur-info-error').innerHTML = '';
   }
 
   if (passwordAfter.value.length == 0) {
-    document.querySelector('.password-after-info-error').innerHTML = 'Vui lÃ²n nháº­p máº­t kháº©u má»›i';
+    document.querySelector('.password-after-info-error').innerHTML = 'Vui lòng nhập mật khẩu mới';
     check = false;
   } else {
     document.querySelector('.password-after-info-error').innerHTML = '';
   }
 
   if (passwordConfirm.value.length == 0) {
-    document.querySelector('.password-after-comfirm-error').innerHTML = 'Vui lÃ²ng nháº­p máº­t kháº©u xÃ¡c nháº­n';
+    document.querySelector('.password-after-comfirm-error').innerHTML = 'Vui lòng nhập mật khẩu xác nhận';
     check = false;
   } else {
     document.querySelector('.password-after-comfirm-error').innerHTML = '';
@@ -724,7 +724,7 @@ function changePassword() {
         document.querySelector('.password-cur-info-error').innerHTML = '';
         if (passwordAfter.value.length > 0) {
           if (passwordAfter.value.length < 6) {
-            document.querySelector('.password-after-info-error').innerHTML = 'Vui lÃ²ng nháº­p máº­t kháº©u má»›i cÃ³ sá»‘  kÃ­ tá»± lá»›n hÆ¡n báº±ng 6';
+            document.querySelector('.password-after-info-error').innerHTML = 'Vui lòng nhập mật khẩu mới có số ký tự lớn hơn hoặc bằng 6';
           } else {
             document.querySelector('.password-after-info-error').innerHTML = '';
             if (passwordConfirm.value.length > 0) {
@@ -739,19 +739,19 @@ function changePassword() {
                   accountChange.password = userChange.password;
                   localStorage.setItem('accounts', JSON.stringify(accounts));
                 }
-                toast({ title: 'Success', message: 'Đổi mật khẩu thành công !', type: 'success', duration: 3000 });
+                toast({ title: 'Thành công', message: 'Đổi mật khẩu thành công!', type: 'success', duration: 3000 });
               } else {
-                document.querySelector('.password-after-comfirm-error').innerHTML = 'Máº­t kháº©u báº¡n nháº­p khÃ´ng trÃ¹ng khá»›p';
+                document.querySelector('.password-after-comfirm-error').innerHTML = 'Mật khẩu bạn nhập không trùng khớp';
               }
             } else {
-              document.querySelector('.password-after-comfirm-error').innerHTML = 'Vui lÃ²ng xÃ¡c nháº­n máº­t kháº©u';
+              document.querySelector('.password-after-comfirm-error').innerHTML = 'Vui lòng xác nhận mật khẩu';
             }
           }
         } else {
-          document.querySelector('.password-after-info-error').innerHTML = 'Vui lÃ²ng nháº­p máº­t kháº©u má»›i';
+          document.querySelector('.password-after-info-error').innerHTML = 'Vui lòng nhập mật khẩu mới';
         }
       } else {
-        document.querySelector('.password-cur-info-error').innerHTML = 'Báº¡n Ä‘Ã£ nháº­p sai máº­t kháº©u hiá»‡n táº¡i';
+        document.querySelector('.password-cur-info-error').innerHTML = 'Bạn đã nhập sai mật khẩu hiện tại';
       }
     }
   }
@@ -764,7 +764,7 @@ function getProductInfo(id) {
   })
 }
 
-// Quáº£n lÃ½ Ä‘Æ¡n hÃ ng (giá»¯ theo localStorage Ä‘á»ƒ khÃ´ng vá»¡ UI cÅ©)
+// Quản lý đơn hàng (giữ theo localStorage để không vỡ UI cũ)
 function renderOrderProduct() {
   let currentUser = JSON.parse(localStorage.getItem('currentuser'));
   let order = localStorage.getItem('order') ? JSON.parse(localStorage.getItem('order')) : [];
@@ -776,7 +776,7 @@ function renderOrderProduct() {
     }
   }
   if (arrDonHang.length == 0) {
-    orderHtml = `<div class="empty-order-section"><img src="./assets/img/empty-order.jpg" alt="" class="empty-order-img"><p>ChÆ°a cÃ³ Ä‘Æ¡n hÃ ng nÃ o</p></div>`;
+    orderHtml = `<div class="empty-order-section"><img src="./assets/img/empty-order.jpg" alt="" class="empty-order-img"><p>Chưa có đơn hàng nào</p></div>`;
   } else {
     arrDonHang.forEach(item => {
       let productHtml = `<div class="order-history-group">`;
@@ -799,7 +799,7 @@ function renderOrderProduct() {
                     </div>
                 </div>`;
       });
-      let textCompl = item.trangthai == 1 ? "ÄÃ£ xá»­ lÃ½" : "Äang xá»­ lÃ½";
+      let textCompl = item.trangthai == 1 ? "Đã xử lý" : "Đang xử lý";
       let classCompl = item.trangthai == 1 ? "complete" : "no-complete"
       productHtml += `<div class="order-history-control">
                 <div class="order-history-status">
@@ -807,7 +807,7 @@ function renderOrderProduct() {
                     <button id="order-history-detail" onclick="detailOrder('${item.id}')"><i class="fa-regular fa-eye"></i> Xem chi tiết</button>
                 </div>
                 <div class="order-history-total">
-                    <span class="order-history-total-desc">Tá»•ng tiá»n: </span>
+                    <span class="order-history-total-desc">Tổng tiền: </span>
                     <span class="order-history-toltal-price">${vnd(item.tongtien)}</span>
                 </div>
             </div>`;
@@ -841,7 +841,7 @@ function formatDate(date) {
   return dd + '/' + mm + '/' + yyyy;
 }
 
-// Xem chi tiáº¿t Ä‘Æ¡n hÃ ng
+// Xem chi tiết đơn hàng
 function detailOrder(id) {
   let order = JSON.parse(localStorage.getItem("order"));
   let detail = order.find(item => {
@@ -850,27 +850,27 @@ function detailOrder(id) {
   document.querySelector(".modal.detail-order").classList.add("open");
   let detailOrderHtml = `<ul class="detail-order-group">
         <li class="detail-order-item">
-            <span class="detail-order-item-left"><i class="fa-light fa-calendar-days"></i> NgÃ y Ä‘áº·t hÃ ng</span>
+            <span class="detail-order-item-left"><i class="fa-light fa-calendar-days"></i> Ngày đặt hàng</span>
             <span class="detail-order-item-right">${formatDate(detail.thoigiandat)}</span>
         </li>
         <li class="detail-order-item">
-            <span class="detail-order-item-left"><i class="fa-light fa-truck"></i> HÃ¬nh thá»©c giao</span>
+            <span class="detail-order-item-left"><i class="fa-light fa-truck"></i> Hình thức giao</span>
             <span class="detail-order-item-right">${detail.hinhthucgiao}</span>
         </li>
         <li class="detail-order-item">
-            <span class="detail-order-item-left"><i class="fa-light fa-clock"></i> NgÃ y nháº­n hÃ ng</span>
+            <span class="detail-order-item-left"><i class="fa-light fa-clock"></i> Ngày nhận hàng</span>
             <span class="detail-order-item-right">${(detail.thoigiangiao == "" ? "" : (detail.thoigiangiao + " - ")) + formatDate(detail.ngaygiaohang)}</span>
         </li>
         <li class="detail-order-item">
-            <span class="detail-order-item-left"><i class="fa-light fa-location-dot"></i> Äá»‹a Ä‘iá»ƒm nháº­n</span>
+            <span class="detail-order-item-left"><i class="fa-light fa-location-dot"></i> Địa điểm nhận</span>
             <span class="detail-order-item-right">${detail.diachinhan}</span>
         </li>
         <li class="detail-order-item">
-            <span class="detail-order-item-left"><i class="fa-thin fa-person"></i> NgÆ°á»i nháº­n</span>
+            <span class="detail-order-item-left"><i class="fa-thin fa-person"></i> Người nhận</span>
             <span class="detail-order-item-right">${detail.tenguoinhan}</span>
         </li>
         <li class="detail-order-item">
-            <span class="detail-order-item-left"><i class="fa-light fa-phone"></i> Sá»‘ Ä‘iá»‡n thoáº¡i nháº­n</span>
+            <span class="detail-order-item-left"><i class="fa-light fa-phone"></i> Số điện thoại nhận</span>
             <span class="detail-order-item-right">${detail.sdtnhan}</span>
         </li>
     </ul>`;
@@ -923,10 +923,10 @@ function renderProducts(showProduct) {
           <h1>Joyce the Season</h1>
         </div>
         <div class="joyce-right">
-          <h2><em>JOYCE THE SEASON ðŸ‚</em></h2>
+          <h2><em>JOYCE THE SEASON 🍂</em></h2>
           <p>
-            MÃ¹a Thu/ÄÃ´ng 2025 mang Ä‘áº¿n hÆ¡i thá»Ÿ tráº§m áº¥m cá»§a sáº¯c Earth tone â€“ gam mÃ u gá»£i cáº£m giÃ¡c an yÃªn vÃ  gáº§n gÅ©i, 
-            káº¿t há»£p cÃ¹ng cháº¥t liá»‡u da cao cáº¥p tÃ´n lÃªn váº» tá»± nhiÃªn, thanh lá»‹ch nhÆ°ng váº«n dá»… dÃ ng hÃ²a nhá»‹p cÃ¹ng má»i phong cÃ¡ch cuá»‘i nÄƒm.
+            Mùa Thu/Đông 2025 mang đến hơi thở trầm ấm của sắc Earth tone – gam màu gợi cảm giác an yên và gần gũi, 
+            kết hợp cùng chất liệu da cao cấp tôn lên vẻ tự nhiên, thanh lịch nhưng vẫn dễ dàng hòa nhịp cùng mọi phong cách cuối năm.
           </p>
         </div>
       </div>
@@ -974,22 +974,22 @@ function renderProducts(showProduct) {
 // Find Product
 var productAll = JSON.parse(localStorage.getItem('products')).filter(item => item.status == 1);
 function searchProducts() {
-  // Láº¥y giÃ¡ trá»‹ tá»« Ã´ tÃ¬m kiáº¿m
+  // Lấy giá trị từ ô tìm kiếm
   let searchInputValue = document.querySelector('.form-search-input').value;
 
-  // Lá»c sáº£n pháº©m theo tá»« khÃ³a
+  // Lọc sản phẩm theo từ khóa
   let result = searchInputValue === "" ? productAll : productAll.filter(item => {
     return item.title.toString().toUpperCase().includes(searchInputValue.toString().toUpperCase());
   });
 
-  // Cuá»™n tá»›i pháº§n hiá»ƒn thá»‹ káº¿t quáº£
+  // Cuộn tới phần hiển thị kết quả
   document.getElementById("home-service").scrollIntoView();
 
-  // Hiá»ƒn thá»‹ káº¿t quáº£
+  // Hiển thị kết quả
   showHomeProduct(result);
 }
 
-// PhÃ¢n trang 
+// Phân trang 
 let perPage = 12;
 let currentPage = 1;
 let totalPage = 0;
@@ -1040,7 +1040,7 @@ function paginationChange(page, productAll, currentPageNow) {
   return node;
 }
 
-// Hiá»ƒn thá»‹ chuyÃªn má»¥c
+// Hiển thị chuyên mục
 function showCategory(category) {
   document.getElementById('trangchu').classList.remove('hide');
   document.getElementById('account-user').classList.remove('open');
@@ -1053,24 +1053,4 @@ function showCategory(category) {
   setupPagination(productSearch, perPage, currentPageSeach);
   document.getElementById("home-title").scrollIntoView();
 }
-
-// // --- FORCE: remove all old listeners on the login button and rebind ours ---
-// const loginBtnNew = document.getElementById('login-button');
-// if (loginBtnNew) {
-//   // clone trick: remove ALL previous listeners bound elsewhere
-//   const cloned = loginBtnNew.cloneNode(true);
-//   loginBtnNew.parentNode.replaceChild(cloned, loginBtnNew);
-
-//   // bind our API-based handler
-//   cloned.addEventListener('click', handleLoginWithAPI);
-//   console.log('[Lesac] Login handler: API mode');
-// }
-
-
-
-
-
-
-
-
 

@@ -1,18 +1,4 @@
-/* =========================================================================
-   Admin (gi? nguyên thi?t k? cu) nhung dùng API th?t thay vì hardcode
-   APIs s? d?ng:
-     - ./api/get_products.php
-     - ./api/admin_products.php (add/update/delete/restore)
-     - ./api/get_accounts.php
-     - ./api/admin_accounts.php (create/update/set_status)
-     - ./api/get_order.php
-   Ghi chú:
-     - Gi? nguyên tên hàm & hành vi d? h?p v?i HTML cu.
-     - Cache d? li?u vào localStorage nhu key cu ("products", "accounts", "order", "orderDetails")
-       d? các hàm/flow cu ch?y trơn tru, nhung ngu?n g?c là t? API.
-   ======================================================================= */
-
-/* ----------------------- Utils & State ----------------------- */
+﻿/* ----------------------- Utils & State ----------------------- */
 function vnd(price) {
   const n = Number(price || 0);
   return n.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
@@ -32,6 +18,17 @@ function toastWarning(message) {
 }
 function toastSuccess(message) {
   toast({ title: "Success", message, type: "success", duration: 3000 });
+}
+
+function normalizeText(value) {
+  return (value || "")
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\u0111/g, "d")
+    .replace(/\u0110/g, "D")
+    .trim()
+    .toLowerCase();
 }
 
 /* Chu?n ho don hng t? get_order.php d? kh?p c?u trc cu */
@@ -358,35 +355,39 @@ function showProductArr(arr) {
 }
 
 function showProduct() {
-  let selectOp = document.getElementById("the-loai").value;
-  let valeSearchInput = document.getElementById("form-search-product").value.trim();
-  let products = JSON.parse(localStorage.getItem("products") || "[]");
+  const selectEl = document.getElementById("the-loai");
+  const selectValue = selectEl?.value || selectEl?.options?.[selectEl.selectedIndex]?.text || "";
+  const valeSearchInput = document.getElementById("form-search-product").value.trim();
+  const products = JSON.parse(localStorage.getItem("products") || "[]");
 
+  const selectKey = normalizeText(selectValue);
   let result;
-  if (selectOp == "T?t c?") {
-    result = products.filter((item) => Number(item.status) == 1);
-  } else if (selectOp == " xa") {
-    result = products.filter((item) => Number(item.status) == 0);
+  if (selectKey === "tat ca") {
+    result = products.slice();
+  } else if (selectKey === "da xoa") {
+    result = products.filter((item) => Number(item.status) === 0);
+  } else if (selectKey) {
+    result = products.filter((item) => Number(item.status) === 1 && normalizeText(item.category) === selectKey);
   } else {
-    result = products.filter((item) => (item.category || "") == selectOp);
+    result = products.filter((item) => Number(item.status) === 1);
   }
 
   if (valeSearchInput) {
-    result = result.filter((item) =>
-      (item.title ?? "").toString().toUpperCase().includes(valeSearchInput.toUpperCase())
-    );
+    const searchKey = normalizeText(valeSearchInput);
+    result = result.filter((item) => normalizeText(item.title).includes(searchKey));
   }
 
+  currentPage = 1;
   displayList(result, perPage, currentPage);
   setupPagination(result, perPage, currentPage);
 }
 
 function cancelSearchProduct() {
-  let products = (JSON.parse(localStorage.getItem("products") || "[]")).filter((i) => Number(i.status) == 1);
-  document.getElementById("the-loai").value = "T?t c?";
+  const selectEl = document.getElementById("the-loai");
+  if (selectEl) selectEl.selectedIndex = 0;
   document.getElementById("form-search-product").value = "";
-  displayList(products, perPage, currentPage);
-  setupPagination(products, perPage, currentPage);
+  currentPage = 1;
+  showProduct();
 }
 
 function createId(arr) {
