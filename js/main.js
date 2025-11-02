@@ -495,7 +495,7 @@ signupButton.addEventListener('click', (event) => {
       .then(loginRes => {
         if (!loginRes.success) throw new Error(loginRes.message || 'ÄÄƒng nháº­p sau Ä‘Äƒng kÃ½ tháº¥t báº¡i');
         localStorage.setItem('currentuser', JSON.stringify(loginRes.user));
-        toast({ title: 'ThÃ nh cÃ´ng', message: 'Táº¡o tÃ i khoáº£n & Ä‘Äƒng nháº­p thÃ nh cÃ´ng!', type: 'success', duration: 3000 });
+        toast({ title: 'Thành công', message: 'Tạo tài khoản thành công!', type: 'success', duration: 3000 });
         closeModal();
         kiemtradangnhap();
         updateAmount();
@@ -566,7 +566,7 @@ loginButton.addEventListener('click', (ev) => {
         // set currentuser
         localStorage.setItem('currentuser', JSON.stringify(user));
 
-        toast({ title: 'Success', message: 'ÄÄƒng nháº­p thÃ nh cÃ´ng', type: 'success', duration: 3000 });
+        toast({ title: 'Success', message: 'Đăng nhập thành công', type: 'success', duration: 3000 });
         closeModal();
         kiemtradangnhap();
         checkAdmin();
@@ -588,11 +588,11 @@ function kiemtradangnhap() {
   let currentUser = localStorage.getItem('currentuser');
   if (currentUser != null) {
     let user = JSON.parse(currentUser);
-    document.querySelector('.auth-container').innerHTML = `<span class="text-dndk">TÃ i khoáº£n</span>
+    document.querySelector('.auth-container').innerHTML = `<span class="text-dndk">Tài khoản</span>
             <span class="text-tk">${user.fullname} <i class="fa-sharp fa-solid fa-caret-down"></span>`
-    document.querySelector('.header-middle-right-menu').innerHTML = `<li><a href="javascript:;" onclick="myAccount()"><i class="fa-light fa-circle-user"></i> TÃ i khoáº£n cá»§a tÃ´i</a></li>
-            <li><a href="javascript:;" onclick="orderHistory()"><i class="fa-regular fa-bags-shopping"></i> ÄÆ¡n hÃ ng Ä‘Ã£ mua</a></li>
-            <li class="border"><a id="logout" href="javascript:;"><i class="fa-light fa-right-from-bracket"></i> ThoÃ¡t tÃ i khoáº£n</a></li>`
+    document.querySelector('.header-middle-right-menu').innerHTML = `<li><a href="javascript:;" onclick="myAccount()"><i class="fa-light fa-circle-user"></i>Thông tin tài khoản</a></li>
+            <li><a href="javascript:;" onclick="orderHistory()"><i class="fa-regular fa-bags-shopping"></i>Đơn hàng đã mua</a></li>
+            <li class="border"><a id="logout" href="javascript:;"><i class="fa-light fa-right-from-bracket"></i>Thoát tài khoản</a></li>`
     document.querySelector('#logout').addEventListener('click', logOut)
   }
 }
@@ -606,7 +606,7 @@ function checkAdmin() {
   let user = JSON.parse(localStorage.getItem('currentuser'));
   if (user && user.userType == 1) {
     let node = document.createElement(`li`);
-    node.innerHTML = `<a href="./admin.html"><i class="fa-light fa-gear"></i> Quáº£n lÃ½ cá»­a hÃ ng</a>`
+    node.innerHTML = `<a href="./admin.html"><i class="fa-light fa-gear"></i>Quản lý cửa hàng</a>`
     document.querySelector('.header-middle-right-menu').prepend(node);
   }
 }
@@ -661,7 +661,7 @@ function changeInformation() {
   user.fullname = infoname.value;
   if (infoemail.value.length > 0) {
     if (!emailIsValid(infoemail.value)) {
-      document.querySelector('.inforemail-error').innerHTML = 'Vui lÃ²ng nháº­p láº¡i email!';
+      document.querySelector('.inforemail-error').innerHTML = 'Vui lòng nhập email !';
       infoemail.value = '';
     } else {
       user.email = infoemail.value;
@@ -687,7 +687,7 @@ function changeInformation() {
   }
 
   kiemtradangnhap();
-  toast({ title: 'Success', message: 'Cáº­p nháº­t thÃ´ng tin thÃ nh cÃ´ng !', type: 'success', duration: 3000 });
+  toast({ title: 'Success', message: 'Cập nhật thông tin thành công !', type: 'success', duration: 3000 });
 }
 
 // Äá»•i máº­t kháº©u (giá»¯ localStorage Ä‘á»ƒ khÃ´ng vá»¡ UI; náº¿u muá»‘n sync DB, táº¡o API update password)
@@ -739,7 +739,7 @@ function changePassword() {
                   accountChange.password = userChange.password;
                   localStorage.setItem('accounts', JSON.stringify(accounts));
                 }
-                toast({ title: 'Success', message: 'Äá»•i máº­t kháº©u thÃ nh cÃ´ng !', type: 'success', duration: 3000 });
+                toast({ title: 'Success', message: 'Đổi mật khẩu thành công !', type: 'success', duration: 3000 });
               } else {
                 document.querySelector('.password-after-comfirm-error').innerHTML = 'Máº­t kháº©u báº¡n nháº­p khÃ´ng trÃ¹ng khá»›p';
               }
@@ -804,7 +804,7 @@ function renderOrderProduct() {
       productHtml += `<div class="order-history-control">
                 <div class="order-history-status">
                     <span class="order-history-status-sp ${classCompl}">${textCompl}</span>
-                    <button id="order-history-detail" onclick="detailOrder('${item.id}')"><i class="fa-regular fa-eye"></i> Xem chi tiáº¿t</button>
+                    <button id="order-history-detail" onclick="detailOrder('${item.id}')"><i class="fa-regular fa-eye"></i> Xem chi tiết</button>
                 </div>
                 <div class="order-history-total">
                     <span class="order-history-total-desc">Tá»•ng tiá»n: </span>
@@ -960,7 +960,7 @@ function renderProducts(showProduct) {
                             <span class="current-price">${vnd(product.price)}</span>
                         </div>
                     <div class="product-buy">
-                        <button onclick="detailProduct(${product.id})" class="card-button order-item"><i class="fa-regular fa-cart-shopping-fast"></i> Äáº·t hÃ ng</button>
+                        <button onclick="detailProduct(${product.id})" class="card-button order-item"><i class="fa-regular fa-cart-shopping-fast"></i>Đặt hàng</button>
                     </div> 
                 </div>
                 </div>
