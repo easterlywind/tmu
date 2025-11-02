@@ -101,7 +101,7 @@ async function detailProduct(index) {
         <p class="product-description">${infoProduct.desc}</p>
     </div>
     <div class="notebox">
-            <p class="notebox-title">Ghi chÃº</p>
+            <p class="notebox-title">Ghi chú</p>
             <textarea class="text-note" id="popup-detail-note" placeholder="Nháº­p thÃ´ng tin cáº§n lÆ°u Ã½..."></textarea>
     </div>
     <div class="modal-footer">

@@ -1,15 +1,15 @@
 /* =========================================================================
-   Admin (gi? nguyên thi?t k? cu) nhung dùng API th?t thay vì hardcode
+   Admin (gi? nguyÃªn thi?t k? cu) nhung dÃ¹ng API th?t thay vÃ¬ hardcode
    APIs s? d?ng:
      - ./api/get_products.php
      - ./api/admin_products.php (add/update/delete/restore)
      - ./api/get_accounts.php
      - ./api/admin_accounts.php (create/update/set_status)
      - ./api/get_order.php
-   Ghi chú:
-     - Gi? nguyên tên hàm & hành vi d? h?p v?i HTML cu.
-     - Cache d? li?u vào localStorage nhu key cu ("products", "accounts", "order", "orderDetails")
-       d? các hàm/flow cu ch?y tron tru, nhung ngu?n g?c là t? API.
+   Ghi chÃº:
+     - Gi? nguyÃªn tÃªn hÃ m & hÃ nh vi d? h?p v?i HTML cu.
+     - Cache d? li?u vÃ o localStorage nhu key cu ("products", "accounts", "order", "orderDetails")
+       d? cÃ¡c hÃ m/flow cu ch?y trÆ¡n tru, nhung ngu?n g?c lÃ  t? API.
    ======================================================================= */
 
 /* ----------------------- Utils & State ----------------------- */
@@ -34,7 +34,7 @@ function toastSuccess(message) {
   toast({ title: "Success", message, type: "success", duration: 3000 });
 }
 
-/* Chu?n hoá don hàng t? get_order.php d? kh?p c?u trúc cu */
+/* Chu?n ho don hng t? get_order.php d? kh?p c?u trc cu */
 function normalizeOrders(raw) {
   let list = [];
   if (Array.isArray(raw)) list = raw;
@@ -56,12 +56,24 @@ function normalizeOrders(raw) {
       o.receiver_name ??
       o.customer_name ??
       "";
-    const createdAt = o.thoigiandat ?? o.created_at ?? o.date ?? o.time ?? "";
+    let createdAt = o.thoigiandat ?? o.created_at ?? o.date ?? o.time ?? "";
     const total = Number(o.tongtien ?? o.total ?? 0);
     const statusRaw = o.trangthai ?? o.status ?? 0;
-    // Quy u?c: 0 = chua x? ly, 1 = da x? ly
-    const trangthai =
-      (statusRaw === 1 || statusRaw === "1" || statusRaw === "done" || statusRaw === "completed") ? 1 : 0;
+    // Quy u?c: 0 = chua xu ly, 1 = da xu ly
+    const statusNormalized = typeof statusRaw === "string" ? statusRaw.toLowerCase().trim() : statusRaw;
+    const isCompleted =
+      statusNormalized === 1 ||
+      statusNormalized === "1" ||
+      statusNormalized === "done" ||
+      statusNormalized === "completed" ||
+      statusNormalized === "processed";
+    const trangthai = isCompleted ? 1 : 0;
+    const statusText =
+      typeof statusNormalized === "string" && statusNormalized !== ""
+        ? statusNormalized
+        : isCompleted
+        ? "completed"
+        : "pending";
 
     const itemArray = Array.isArray(o.items)
       ? o.items
@@ -70,25 +82,44 @@ function normalizeOrders(raw) {
     let shippingMethod = o.hinhthucgiao ?? o.shipping_method ?? "";
     let deliveryDate = o.ngaygiaohang ?? o.delivery_date ?? "";
     let deliveryTime = o.thoigiangiao ?? o.delivery_time ?? "";
-    let noteText = o.ghichu ?? "";
-    const parsedNote = {};
+    let noteText = (o.ghichu ?? "").toString().trim();
+    const remainderNotes = [];
 
     if (typeof o.note === "string" && o.note.trim() !== "") {
       o.note.split("|").forEach((chunk) => {
-        const [label, ...rest] = chunk.split(":");
-        if (!label || rest.length === 0) return;
-        const key = label.trim().toLowerCase();
-        const value = rest.join(":").trim();
-        parsedNote[key] = value;
-      });
+        const raw = chunk.trim();
+        if (!raw) return;
+        const colonIdx = raw.indexOf(":");
+        if (colonIdx === -1) {
+          remainderNotes.push(raw);
+          return;
+        }
+        const label = raw.slice(0, colonIdx).trim().toLowerCase();
+        const value = raw.slice(colonIdx + 1).trim();
+        if (!value) return;
 
-      if (noteText === "" && parsedNote["note"]) noteText = parsedNote["note"];
-      if (!shippingMethod && parsedNote["shipping"]) shippingMethod = parsedNote["shipping"];
-      if (!deliveryDate && parsedNote["delivery date"]) deliveryDate = parsedNote["delivery date"];
-      if (!deliveryTime && parsedNote["delivery time"]) deliveryTime = parsedNote["delivery time"];
+        switch (label) {
+          case "note":
+            if (!noteText) noteText = value;
+            break;
+          case "shipping":
+            if (!shippingMethod) shippingMethod = value;
+            break;
+          case "delivery date":
+            if (!deliveryDate) deliveryDate = value;
+            break;
+          case "delivery time":
+            if (!deliveryTime) deliveryTime = value;
+            break;
+          default:
+            remainderNotes.push(raw);
+            break;
+        }
+      });
     }
 
-    if (noteText === "") noteText = o.note ?? "";
+    if (!noteText && remainderNotes.length) noteText = remainderNotes.join(" | ");
+    if (!createdAt) createdAt = deliveryDate || "";
 
     orders.push({
       id,
@@ -96,6 +127,8 @@ function normalizeOrders(raw) {
       thoigiandat: createdAt,
       tongtien: total,
       trangthai,
+      status_text: statusText,
+      note_raw: o.note ?? "",
       // gi? l?i v?i tru?ng c?n cho detail modal
       tenguoinhan: o.tenguoinhan ?? o.receiver_name ?? receiverName ?? "",
       sdtnhan: o.sdtnhan ?? o.receiver_phone ?? o.phone ?? "",
@@ -174,7 +207,7 @@ document.querySelectorAll(".section").forEach((sec) => {
     try {
       const r = await fetch("./api/get_products.php", { cache: "no-store" });
       const products = (await r.json()) ?? [];
-      // Ð?m b?o có status d? filter "Ðã xóa"/"T?t c?"
+      // ?m b?o c status d? filter " xa"/"T?t c?"
       const norm = Array.isArray(products)
         ? products.map((p) => ({
             ...p,
@@ -185,7 +218,7 @@ document.querySelectorAll(".section").forEach((sec) => {
         : [];
       localStorage.setItem("products", JSON.stringify(norm));
     } catch (e) {
-      console.warn("get_products fail -> dùng cache n?u có", e);
+      console.warn("get_products fail -> dng cache n?u c", e);
     }
 
     // ACCOUNTS
@@ -203,7 +236,7 @@ document.querySelectorAll(".section").forEach((sec) => {
         : [];
       localStorage.setItem("accounts", JSON.stringify(norm));
     } catch (e) {
-      console.warn("get_accounts fail -> dùng cache n?u có", e);
+      console.warn("get_accounts fail -> dng cache n?u c", e);
     }
 
     // ORDERS
@@ -214,12 +247,12 @@ document.querySelectorAll(".section").forEach((sec) => {
       localStorage.setItem("order", JSON.stringify(orders));
       localStorage.setItem("orderDetails", JSON.stringify(details));
     } catch (e) {
-      console.warn("get_order fail -> dùng cache n?u có", e);
+      console.warn("get_order fail -> dng cache n?u c", e);
       if (!localStorage.getItem("order")) localStorage.setItem("order", "[]");
       if (!localStorage.getItem("orderDetails")) localStorage.setItem("orderDetails", "[]");
     }
 
-    // Dashboard (gi? c?u trúc cu)
+    // Dashboard (gi? c?u trc cu)
     document.getElementById("amount-user").innerHTML = getAmoumtUser();
     document.getElementById("amount-product").innerHTML = getAmoumtProduct();
     document.getElementById("doanh-thu").innerHTML = vnd(getMoney());
@@ -228,13 +261,13 @@ document.querySelectorAll(".section").forEach((sec) => {
     showProduct();
     showUser();
     showOrder(getOrdersLS());
-    showThongKe(createObj()); // th?ng kê theo thi?t k? cu
+    showThongKe(createObj()); // th?ng k theo thi?t k? cu
   } catch (err) {
     console.error("BOOT error", err);
   }
 })();
 
-/* ----------------------- DASHBOARD helpers (gi? tên cu) ----------------------- */
+/* ----------------------- DASHBOARD helpers (gi? tn cu) ----------------------- */
 function getAmoumtProduct() {
   let products = JSON.parse(localStorage.getItem("products") || "[]");
   return products.filter((p) => Number(p.status) === 1).length;
@@ -255,7 +288,7 @@ function getOrdersLS() {
   return JSON.parse(localStorage.getItem("order") || "[]");
 }
 
-/* ----------------------- PHÂN TRANG (gi? nguyên) ----------------------- */
+/* ----------------------- PHN TRANG (gi? nguyn) ----------------------- */
 function displayList(productAll, perPage, currentPage) {
   let start = (currentPage - 1) * perPage;
   let end = start + perPage;
@@ -290,7 +323,7 @@ function paginationChange(page, productAll) {
 function showProductArr(arr) {
   let productHtml = "";
   if (arr.length == 0) {
-    productHtml = `<div class="no-result"><div class="no-result-i"><i class="fa-light fa-face-sad-cry"></i></div><div class="no-result-h">Không có s?n ph?m d? hi?n th?</div></div>`;
+    productHtml = `<div class="no-result"><div class="no-result-i"><i class="fa-light fa-face-sad-cry"></i></div><div class="no-result-h">Khng c s?n ph?m d? hi?n th?</div></div>`;
   } else {
     arr.forEach((product) => {
       let btnCtl =
@@ -332,7 +365,7 @@ function showProduct() {
   let result;
   if (selectOp == "T?t c?") {
     result = products.filter((item) => Number(item.status) == 1);
-  } else if (selectOp == "Ðã xóa") {
+  } else if (selectOp == " xa") {
     result = products.filter((item) => Number(item.status) == 0);
   } else {
     result = products.filter((item) => (item.category || "") == selectOp);
@@ -367,7 +400,7 @@ function createId(arr) {
 }
 
 async function deleteProduct(id) {
-  if (!confirm("B?n có ch?c mu?n xóa?")) return;
+  if (!confirm("B?n c ch?c mu?n xa?")) return;
   try {
     const res = await fetch("./api/admin_products.php", {
       method: "POST",
@@ -376,11 +409,11 @@ async function deleteProduct(id) {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.success === false) throw new Error(data.message || "Delete failed");
-    toastSuccess("Xóa s?n ph?m thành công !");
+    toastSuccess("Xa s?n ph?m thnh cng !");
   } catch (e) {
-    toastWarning("Không th? xóa trên máy ch?. Ðang c?p nh?t local d? t?m hi?n th?.");
+    toastWarning("Khng th? xa trn my ch?. ang c?p nh?t local d? t?m hi?n th?.");
   }
-  // fallback: c?p nh?t local d? UI dúng
+  // fallback: c?p nh?t local d? UI dng
   let products = JSON.parse(localStorage.getItem("products") || "[]");
   const idx = products.findIndex((p) => Number(p.id) === Number(id));
   if (idx > -1) products[idx].status = 0;
@@ -389,7 +422,7 @@ async function deleteProduct(id) {
 }
 
 async function changeStatusProduct(id) {
-  if (!confirm("B?n có ch?c ch?n mu?n h?y xóa?")) return;
+  if (!confirm("B?n c ch?c ch?n mu?n h?y xa?")) return;
   try {
     const res = await fetch("./api/admin_products.php", {
       method: "POST",
@@ -398,9 +431,9 @@ async function changeStatusProduct(id) {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.success === false) throw new Error(data.message || "Restore failed");
-    toastSuccess("Khôi ph?c s?n ph?m thành công !");
+    toastSuccess("Khi ph?c s?n ph?m thnh cng !");
   } catch (e) {
-    toastWarning("Không th? khôi ph?c trên máy ch?. Ðang c?p nh?t local d? t?m hi?n th?.");
+    toastWarning("Khng th? khi ph?c trn my ch?. ang c?p nh?t local d? t?m hi?n th?.");
   }
   let products = JSON.parse(localStorage.getItem("products") || "[]");
   const idx = products.findIndex((p) => Number(p.id) === Number(id));
@@ -413,7 +446,7 @@ let indexCur;
 function editProduct(id) {
   let products = JSON.parse(localStorage.getItem("products") || "[]");
   let index = products.findIndex((item) => Number(item.id) == Number(id));
-  if (index < 0) return toastWarning("Không tìm th?y s?n ph?m!");
+  if (index < 0) return toastWarning("Khng tm th?y s?n ph?m!");
   indexCur = index;
   document.querySelectorAll(".add-product-e").forEach((item) => (item.style.display = "none"));
   document.querySelectorAll(".edit-product-e").forEach((item) => (item.style.display = "block"));
@@ -443,7 +476,7 @@ document.getElementById("update-product-button")?.addEventListener("click", asyn
   const categoryText = document.getElementById("chon-mon").value;
 
   if (!titleProductCur || !curProductCur || isNaN(Number(curProductCur))) {
-    return toastWarning("Vui lòng nh?p tên & giá h?p l?!");
+    return toastWarning("Vui lng nh?p tn & gi h?p l?!");
   }
 
   // g?i API update
@@ -463,12 +496,12 @@ document.getElementById("update-product-button")?.addEventListener("click", asyn
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.success === false) throw new Error(data.message || "Update failed");
-    toastSuccess("S?a s?n ph?m thành công!");
+    toastSuccess("S?a s?n ph?m thnh cng!");
   } catch (err) {
-    toastWarning("Không th? c?p nh?t trên máy ch?. Ðang c?p nh?t local d? t?m hi?n th?.");
+    toastWarning("Khng th? c?p nh?t trn my ch?. ang c?p nh?t local d? t?m hi?n th?.");
   }
 
-  // c?p nh?t local d? UI ph?n ánh ngay
+  // c?p nh?t local d? UI ph?n nh ngay
   products[indexCur] = {
     ...products[indexCur],
     title: titleProductCur,
@@ -494,10 +527,10 @@ document.getElementById("add-product-button")?.addEventListener("click", async (
   const categoryText = document.getElementById("chon-mon").value;
 
   if (!tenMon || !price || !moTa) {
-    return toast({ title: "Chú ý", message: "Vui lòng nh?p d?y d? thông tin món!", type: "warning", duration: 3000 });
+    return toast({ title: "Ch ", message: "Vui lng nh?p d?y d? thng tin mn!", type: "warning", duration: 3000 });
   }
   if (isNaN(Number(price))) {
-    return toast({ title: "Chú ý", message: "Giá ph?i ? d?ng s?!", type: "warning", duration: 3000 });
+    return toast({ title: "Ch ", message: "Gi ph?i ? d?ng s?!", type: "warning", duration: 3000 });
   }
 
   // g?i API add
@@ -516,12 +549,12 @@ document.getElementById("add-product-button")?.addEventListener("click", async (
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.success === false) throw new Error(data.message || "Add failed");
-    toastSuccess("Thêm s?n ph?m thành công!");
+    toastSuccess("Thm s?n ph?m thnh cng!");
   } catch (err) {
-    toastWarning("Không th? thêm trên máy ch?. Ðang thêm local d? t?m hi?n th?.");
+    toastWarning("Khng th? thm trn my ch?. ang thm local d? t?m hi?n th?.");
   }
 
-  // c?p nh?t local ngay (d? UI l?p t?c có)
+  // c?p nh?t local ngay (d? UI l?p t?c c)
   let products = JSON.parse(localStorage.getItem("products") || "[]");
   products.unshift({
     id: createId(products),
@@ -547,11 +580,11 @@ function setDefaultValue() {
   document.getElementById("ten-mon").value = "";
   document.getElementById("gia-moi").value = "";
   document.getElementById("mo-ta").value = "";
-  // GI? nguyên category m?c d?nh theo thi?t k? cu (tu? b?n set l?i option mong mu?n)
+  // GI? nguyn category m?c d?nh theo thi?t k? cu (tu? b?n set l?i option mong mu?n)
   document.getElementById("chon-mon").value = document.getElementById("chon-mon").options?.[0]?.value || "T?t c?";
 }
 
-// Open/Close Modal Add Product gi? nguyên
+// Open/Close Modal Add Product gi? nguyn
 document.getElementById("btn-add-product")?.addEventListener("click", () => {
   document.querySelectorAll(".add-product-e").forEach((item) => (item.style.display = "block"));
   document.querySelectorAll(".edit-product-e").forEach((item) => (item.style.display = "none"));
@@ -561,35 +594,65 @@ document.querySelectorAll(".modal-close").forEach((btn, i) => {
   btn.onclick = () => document.querySelectorAll(".modal")[i]?.classList.remove("open");
 });
 
-// On change Image (gi? nguyên)
+// On change Image (gi? nguyn)
 function uploadImage(el) {
   let path = "./assets/img/products/" + (el.value.split("\\")[2] || "");
   document.querySelector(".upload-image-preview").setAttribute("src", path);
 }
 
-/* ----------------------- ÐON HÀNG ----------------------- */
-function changeStatus(id, el) {
+/* ----------------------- ON HNG ----------------------- */
+async function changeStatus(id, el) {
   let orders = getOrdersLS();
   let order = orders.find((item) => item.id == id);
   if (!order) return;
-  order.trangthai = 1;
-  el.classList.remove("btn-chuaxuly");
-  el.classList.add("btn-daxuly");
-  el.innerHTML = "Ðã x? lý";
+
+  const nextTrangthai = order.trangthai === 1 ? 0 : 1;
+  const nextStatusText = nextTrangthai === 1 ? "completed" : "pending";
+  const orderId = Number(order.id ?? 0);
+
+  if (orderId > 0) {
+    try {
+      const res = await fetch("./api/admin_orders.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "set_status",
+          id: orderId,
+          status: nextStatusText
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.success === false) {
+        throw new Error(data.message || "Update status failed");
+      }
+    } catch (err) {
+      toastWarning("Khong the cap nhat trang thai tren may chu.");
+      return;
+    }
+  }
+
+  order.trangthai = nextTrangthai;
+  order.status = nextStatusText;
+  if (order.status_text !== undefined) order.status_text = nextStatusText;
   localStorage.setItem("order", JSON.stringify(orders));
+
+  const isCompleted = nextTrangthai === 1;
+  el.classList.toggle("btn-chuaxuly", !isCompleted);
+  el.classList.toggle("btn-daxuly", isCompleted);
+  el.innerHTML = isCompleted ? "Da xu ly" : "Chua xu ly";
   findOrder();
 }
 
 function showOrder(arr) {
   let orderHtml = "";
   if (arr.length == 0) {
-    orderHtml = `<td colspan="6">Không có d? li?u</td>`;
+    orderHtml = `<td colspan="6">Khng c d? li?u</td>`;
   } else {
     arr.forEach((item) => {
       let status =
         item.trangthai == 0
-          ? `<span class="status-no-complete">Chua x? lý</span>`
-          : `<span class="status-complete">Ðã x? lý</span>`;
+          ? `<span class="status-no-complete">Chua xu ly</span>`
+          : `<span class="status-complete"> xu ly</span>`;
       let date = formatDate(item.thoigiandat);
       orderHtml += `
       <tr>
@@ -609,7 +672,7 @@ function showOrder(arr) {
 
 window.addEventListener("load", () => showOrder(getOrdersLS())); // gi? call cu
 
-/* L?y chi ti?t don t? localStorage (dã sync t? API n?u có items) */
+/* L?y chi ti?t don t? localStorage (d sync t? API n?u c items) */
 function getOrderDetails(madon) {
   let orderDetails = JSON.parse(localStorage.getItem("orderDetails") || "[]");
   return orderDetails.filter((item) => item.madon == madon);
@@ -654,11 +717,11 @@ function detailOrder(id) {
   spHtml += `<div class="modal-detail-right">
     <ul class="detail-order-group">
       <li class="detail-order-item">
-        <span class="detail-order-item-left"><i class="fa-light fa-calendar-days"></i> Ngày d?t hàng</span>
+        <span class="detail-order-item-left"><i class="fa-light fa-calendar-days"></i> Ngy d?t hng</span>
         <span class="detail-order-item-right">${formatDate(order?.thoigiandat)}</span>
       </li>
       <li class="detail-order-item">
-        <span class="detail-order-item-left"><i class="fa-light fa-truck"></i> Hình th?c giao</span>
+        <span class="detail-order-item-left"><i class="fa-light fa-truck"></i> Hnh th?c giao</span>
         <span class="detail-order-item-right">${order.hinhthucgiao || ""}</span>
       </li>
       <li class="detail-order-item">
@@ -674,11 +737,11 @@ function detailOrder(id) {
         <p class="detail-order-item-b">${thoigiangiao}${ngaygiao}</p>
       </li>
       <li class="detail-order-item tb">
-        <span class="detail-order-item-t"><i class="fa-light fa-location-dot"></i> Ð?a ch? nh?n</span>
+        <span class="detail-order-item-t"><i class="fa-light fa-location-dot"></i> ?a ch? nh?n</span>
         <p class="detail-order-item-b">${order?.diachinhan || ""}</p>
       </li>
       <li class="detail-order-item tb">
-        <span class="detail-order-item-t"><i class="fa-light fa-note-sticky"></i> Ghi chú</span>
+        <span class="detail-order-item-t"><i class="fa-light fa-note-sticky"></i> Ghi ch</span>
         <p class="detail-order-item-b">${order?.ghichu || ""}</p>
       </li>
     </ul>
@@ -686,11 +749,11 @@ function detailOrder(id) {
   document.querySelector(".modal-detail-order").innerHTML = spHtml;
 
   let classDetailBtn = order?.trangthai == 0 ? "btn-chuaxuly" : "btn-daxuly";
-  let textDetailBtn = order?.trangthai == 0 ? "Chua x? lý" : "Ðã x? lý";
+  let textDetailBtn = order?.trangthai == 0 ? "Chua xu ly" : "Da xu ly";
   document.querySelector(".modal-detail-bottom").innerHTML = `
     <div class="modal-detail-bottom-left">
       <div class="price-total">
-        <span class="thanhtien">Thành ti?n</span>
+        <span class="thanhtien">Thnh ti?n</span>
         <span class="price">${vnd(order?.tongtien || 0)}</span>
       </div>
     </div>
@@ -749,7 +812,7 @@ function cancelSearchOrder() {
   showOrder(orders);
 }
 
-/* ----------------------- TH?NG KÊ (gi? API cu -> local) ----------------------- */
+/* ----------------------- TH?NG K (gi? API cu -> local) ----------------------- */
 function createObj() {
   let orders = JSON.parse(localStorage.getItem("order") || "[]");
   let products = JSON.parse(localStorage.getItem("products") || "[]");
@@ -874,7 +937,7 @@ function showThongKe(arr, mode) {
   });
 }
 
-// g?i 1 l?n sau boot dã g?i ? trên
+// g?i 1 l?n sau boot d g?i ? trn
 // showThongKe(createObj())
 
 function detailOrderProduct(arr, id) {
@@ -919,12 +982,12 @@ function signUpFormReset() {
 function showUserArr(arr) {
   let accountHtml = "";
   if (arr.length == 0) {
-    accountHtml = `<td colspan="5">Không có d? li?u</td>`;
+    accountHtml = `<td colspan="5">Khng c d? li?u</td>`;
   } else {
     arr.forEach((account, index) => {
       let tinhtrang =
         Number(account.status) == 0
-          ? `<span class="status-no-complete">B? khóa</span>`
+          ? `<span class="status-no-complete">B? kha</span>`
           : `<span class="status-complete">Ho?t d?ng</span>`;
       accountHtml += ` <tr>
         <td>${index + 1}</td>
@@ -999,8 +1062,8 @@ window.addEventListener("load", showUser);
 function deleteAcount(index) {
   let accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
   if (!accounts[index]) return;
-  if (confirm("B?n có ch?c mu?n xóa?")) {
-    // Không có API xoá user -> xóa local d? ph?n ánh UI (tu? b?n b? sung API sau)
+  if (confirm("B?n c ch?c mu?n xa?")) {
+    // Khng c API xo user -> xa local d? ph?n nh UI (tu? b?n b? sung API sau)
     accounts.splice(index, 1);
     localStorage.setItem("accounts", JSON.stringify(accounts));
     showUser();
@@ -1014,7 +1077,7 @@ function editAccount(phone) {
   document.querySelectorAll(".edit-account-e").forEach((item) => (item.style.display = "block"));
   let accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
   let index = accounts.findIndex((item) => (item.phone || "").toString() == (phone || "").toString());
-  if (index < 0) return toastWarning("Không tìm th?y tài kho?n!");
+  if (index < 0) return toastWarning("Khng tm th?y ti kho?n!");
   indexFlag = index;
   document.getElementById("fullname").value = accounts[index].fullname || "";
   document.getElementById("phone").value = accounts[index].phone || "";
@@ -1033,7 +1096,7 @@ updateAccount?.addEventListener("click", async (e) => {
   let status = document.getElementById("user-status").checked ? 1 : 0;
 
   if (!fullname || !phone || !password) {
-    return toast({ title: "Chú ý", message: "Vui lòng nh?p d?y d? thông tin !", type: "warning", duration: 3000 });
+    return toast({ title: "Ch ", message: "Vui lng nh?p d?y d? thng tin !", type: "warning", duration: 3000 });
   }
 
   // g?i API update
@@ -1053,9 +1116,9 @@ updateAccount?.addEventListener("click", async (e) => {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.success === false) throw new Error(data.message || "Update account failed");
-    toastSuccess("Thay d?i thông tin thành công !");
+    toastSuccess("Thay d?i thng tin thnh cng !");
   } catch (err) {
-    toastWarning("Không th? c?p nh?t trên máy ch?. Ðang c?p nh?t local d? t?m hi?n th?.");
+    toastWarning("Khng th? c?p nh?t trn my ch?. ang c?p nh?t local d? t?m hi?n th?.");
   }
 
   // c?p nh?t local
@@ -1082,27 +1145,27 @@ addAccount?.addEventListener("click", async (e) => {
 
   // validate nhu cu
   if (fullNameUser.length == 0) {
-    formMessageName.innerHTML = "Vui lòng nh?p h? vâ tên";
+    formMessageName.innerHTML = "Vui lng nh?p h? v tn";
     fullNameIP.focus();
     return;
   } else if (fullNameUser.length < 3) {
     fullNameIP.value = "";
-    formMessageName.innerHTML = "Vui lòng nh?p h? và tên l?n hon 3 kí t?";
+    formMessageName.innerHTML = "Vui lng nh?p h? v tn l?n hon 3 k t?";
     return;
   }
   if (phoneUser.length == 0) {
-    formMessagePhone.innerHTML = "Vui lòng nh?p vào s? di?n tho?i";
+    formMessagePhone.innerHTML = "Vui lng nh?p vo s? di?n tho?i";
     return;
   } else if (phoneUser.length != 10) {
-    formMessagePhone.innerHTML = "Vui lòng nh?p vào s? di?n tho?i 10 s?";
+    formMessagePhone.innerHTML = "Vui lng nh?p vo s? di?n tho?i 10 s?";
     document.getElementById("phone").value = "";
     return;
   }
   if (passwordUser.length == 0) {
-    formMessagePassword.innerHTML = "Vui lòng nh?p m?t kh?u";
+    formMessagePassword.innerHTML = "Vui lng nh?p m?t kh?u";
     return;
   } else if (passwordUser.length < 6) {
-    formMessagePassword.innerHTML = "Vui lòng nh?p m?t kh?u l?n hon 6 kí t?";
+    formMessagePassword.innerHTML = "Vui lng nh?p m?t kh?u l?n hon 6 k t?";
     document.getElementById("password").value = "";
     return;
   }
@@ -1125,9 +1188,9 @@ addAccount?.addEventListener("click", async (e) => {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.success === false) throw new Error(data.message || "Create account failed");
-    toastSuccess("T?o thành công tài kho?n !");
+    toastSuccess("T?o thnh cng ti kho?n !");
   } catch (err) {
-    toastWarning("Không th? t?o trên máy ch?. Ðang t?o local d? t?m hi?n th?.");
+    toastWarning("Khng th? t?o trn my ch?. ang t?o local d? t?m hi?n th?.");
   }
 
   // c?p nh?t local ngay
@@ -1150,7 +1213,7 @@ addAccount?.addEventListener("click", async (e) => {
     showUser();
     signUpFormReset();
   } else {
-    toast({ title: "C?nh báo !", message: "Tài kho?n dã t?n t?i !", type: "error", duration: 3000 });
+    toast({ title: "C?nh bo !", message: "Ti kho?n d t?n t?i !", type: "error", duration: 3000 });
   }
 });
 
